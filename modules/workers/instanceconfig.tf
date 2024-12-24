@@ -52,15 +52,18 @@ resource "oci_core_instance_configuration" "workers" {
 
       metadata = merge(
         {
-          apiserver_host           = var.apiserver_private_host
-          cluster_ca_cert          = var.cluster_ca_cert
-          oke-k8version            = var.kubernetes_version
-          oke-kubeproxy-proxy-mode = var.kubeproxy_mode
-          oke-tenancy-id           = var.tenancy_id
-          oke-initial-node-labels  = join(",", [for k, v in each.value.node_labels : format("%v=%v", k, v)])
-          secondary_vnics          = jsonencode(lookup(each.value, "secondary_vnics", {}))
-          ssh_authorized_keys      = var.ssh_public_key
-          user_data                = lookup(lookup(data.cloudinit_config.workers, each.key, {}), "rendered", "")
+          apiserver_host            = var.apiserver_private_host
+          cluster_ca_cert           = var.cluster_ca_cert
+          oke-k8version             = var.kubernetes_version
+          oke-kubeproxy-proxy-mode  = var.kubeproxy_mode
+          oke-tenancy-id            = var.tenancy_id
+          oke-initial-node-labels   = join(",", [for k, v in each.value.node_labels : format("%v=%v", k, v)])
+          secondary_vnics           = jsonencode(lookup(each.value, "secondary_vnics", {}))
+          ssh_authorized_keys       = var.ssh_public_key
+          user_data                 = lookup(lookup(data.cloudinit_config.workers, each.key, {}), "rendered", "")
+          oke-native-pod-networking = "true"
+          oke-max-pods              = "110"
+          pod-subnets               = module.oke.pod_subnet_id
         },
 
         # Only provide cluster DNS service address if set explicitly; determined automatically in practice.

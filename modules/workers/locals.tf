@@ -161,6 +161,7 @@ locals {
           "oke.oraclecloud.com/pool.name"          = pool_name
           "oke.oraclecloud.com/pool.mode"          = pool.mode
           "oke.oraclecloud.com/cluster_autoscaler" = pool.allow_autoscaler ? "allowed" : "disabled"
+          "oci.oraclecloud.com/vcn-native-ip-cni"  = "true"
         },
         pool.autoscale ? { "oke.oraclecloud.com/cluster_autoscaler" = "managed" } : {},
         pool.node_labels,
