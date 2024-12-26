@@ -39,7 +39,6 @@ You can use the instructions [here](https://docs.oracle.com/en-us/iaas/Content/C
 
 
 ### Deploying a cluster with VCN-Native Pod Networking using the template
-You can easily deploy the cluster using the **Deploy to Oracle Cloud** button below.
 
 1. #### Update the VCN and subnet CIDRs
 Change `vcn_cidrs` variable in `variables.tf` and the subnets in `oke-cluster.tf` if needed. The default VCN CIDR is `10.140.0.0/16`.
