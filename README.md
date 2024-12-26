@@ -77,7 +77,7 @@ worker_ops_pool_size       = 1
 ```
 
 3. #### Wait until you see the node in the cluster
-The values of `access_k8s_public_endpoint` & `access_k8s_private_endpoint` will show you the command to create the kubeconfig to access the cluster locally. You will need to [install](https://docs.oracle.com/en-us/iaas/Content/API/SDKDocs/cliinstall.htm) and [configure](https://docs.oracle.com/en-us/iaas/Content/API/SDKDocs/cliconfigure.htm) OCI CLI.
+The values of outputs `access_k8s_public_endpoint` & `access_k8s_private_endpoint` will show you the command to create the kubeconfig to access the cluster locally. You will need to [install](https://docs.oracle.com/en-us/iaas/Content/API/SDKDocs/cliinstall.htm) and [configure](https://docs.oracle.com/en-us/iaas/Content/API/SDKDocs/cliconfigure.htm) OCI CLI.
 
 
 ```sh
