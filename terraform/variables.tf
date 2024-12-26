@@ -14,7 +14,7 @@ variable "create_vcn" { default = true }
 variable "kubernetes_version" { default = "v1.29.1" }
 variable "region" { type = string }
 variable "tenancy_ocid" { type = string }
-variable "vcn_cidrs" { default = "10.140.0.0/16" } # TODO input in RMS schema
+variable "vcn_cidrs" { default = "10.140.0.0/16" }
 variable "vcn_name" { default = "oke-gpu-quickstart" }
 
 variable "create_bastion" { default = true }
@@ -83,6 +83,7 @@ variable "fss_ad" { default = "" }
 variable "create_bv_high" { default = false }
 
 variable "worker_ops_boot_volume_size" { default = 128 }
+variable "worker_ops_enabled" { default = true }
 variable "worker_ops_memory" { default = 64 }
 variable "worker_ops_ocpus" { default = 16 }
 variable "worker_ops_pool_size" { default = 3 }
@@ -187,7 +188,7 @@ variable "nvme_raid_level" { default = 0 }
 # Installation
 
 variable "install_monitoring" {
-  default = true
+  default = false
   type    = bool
 }
 variable "install_prometheus_stack" {

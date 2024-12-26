@@ -23,12 +23,12 @@ output "bastion_subnet_cidr" { value = module.oke.bastion_subnet_cidr }
 output "bastion_nsg_id" { value = module.oke.bastion_nsg_id }
 
 # Operator
-output "operator_id" { value = module.oke.operator_id }
-output "operator_private_ip" { value = module.oke.operator_private_ip }
-output "operator_ssh_command" { value = module.oke.ssh_to_operator }
-output "operator_subnet_id" { value = module.oke.operator_subnet_id }
-output "operator_subnet_cidr" { value = module.oke.operator_subnet_cidr }
-output "operator_nsg_id" { value = module.oke.operator_nsg_id }
+# output "operator_id" { value = module.oke.operator_id }
+# output "operator_private_ip" { value = module.oke.operator_private_ip }
+# output "operator_ssh_command" { value = module.oke.ssh_to_operator }
+# output "operator_subnet_id" { value = module.oke.operator_subnet_id }
+# output "operator_subnet_cidr" { value = module.oke.operator_subnet_cidr }
+# output "operator_nsg_id" { value = module.oke.operator_nsg_id }
 
 # Cluster
 output "cluster_id" { value = module.oke.cluster_id }
@@ -63,24 +63,24 @@ output "worker_rdma_pool_id" { value = lookup(module.oke.worker_pool_ids, "oke-r
 #output "fss_export_set_id" { value = oci_file_storage_export_set.fss.0.id }
 
 # Monitoring
-output "grafana_admin_password" {
-  value = nonsensitive(random_password.grafana_admin_password.result)
-}
-output "prometheus_stack_version" { value = local.prometheus_stack_version }
-output "prometheus_pushgateway_version" { value = local.prometheus_pushgateway_version }
-output "prometheus_adapter_version" { value = local.prometheus_adapter_version }
-output "metrics_server_version" { value = local.metrics_server_version }
-output "dcgm_exporter_version" { value = local.dcgm_exporter_version }
+# output "grafana_admin_password" {
+#   value = nonsensitive(random_password.grafana_admin_password.result)
+# }
+# output "prometheus_stack_version" { value = local.prometheus_stack_version }
+# output "prometheus_pushgateway_version" { value = local.prometheus_pushgateway_version }
+# output "prometheus_adapter_version" { value = local.prometheus_adapter_version }
+# output "metrics_server_version" { value = local.metrics_server_version }
+# output "dcgm_exporter_version" { value = local.dcgm_exporter_version }
 
-output "prom_server_port_forward" {
-  value = format("kubectl port-forward -n %v svc/prom-kube-prometheus-stack-prometheus 9090:9090", var.monitoring_namespace)
-}
-output "prom_pushgateway_port_forward" {
-  value = format("kubectl port-forward -n %v svc/prom-pushgateway-prometheus-pushgateway 9091:9091", var.monitoring_namespace)
-}
-output "grafana_port_forward" {
-  value = format("kubectl port-forward -n %v svc/prom-grafana 3000:80", var.monitoring_namespace)
-}
+# output "prom_server_port_forward" {
+#   value = format("kubectl port-forward -n %v svc/prom-kube-prometheus-stack-prometheus 9090:9090", var.monitoring_namespace)
+# }
+# output "prom_pushgateway_port_forward" {
+#   value = format("kubectl port-forward -n %v svc/prom-pushgateway-prometheus-pushgateway 9091:9091", var.monitoring_namespace)
+# }
+# output "grafana_port_forward" {
+#   value = format("kubectl port-forward -n %v svc/prom-grafana 3000:80", var.monitoring_namespace)
+# }
 
 output "access_k8s_public_endpoint" {
   value = format("oci ce cluster create-kubeconfig --cluster-id %v --file $HOME/.kube/config --region %v --token-version 2.0.0 --kube-endpoint PUBLIC_ENDPOINT", module.oke.cluster_id, var.region)

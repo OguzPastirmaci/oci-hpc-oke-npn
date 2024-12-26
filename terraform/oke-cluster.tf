@@ -61,7 +61,7 @@ locals {
 }
 
 module "oke" {
-  source                            = "github.com/oracle-quickstart/oci-hpc-oke.git?ref=5.1.8&depth=1"
+  source                            = "github.com/OguzPastirmaci/oci-hpc-oke-npn.git?ref=5.1.8&depth=1"
   providers                         = { oci.home = oci.home }
   region                            = var.region
   tenancy_id                        = var.tenancy_ocid
@@ -86,7 +86,7 @@ module "oke" {
   bastion_upgrade             = false
   cluster_name                = local.cluster_name
   cluster_type                = "enhanced"
-  cni_type                    = "flannel"
+  cni_type                    = "npn"
   control_plane_allowed_cidrs = flatten(tolist([var.control_plane_allowed_cidrs]))
   control_plane_is_public     = true
   create_bastion              = var.create_bastion
@@ -141,6 +141,7 @@ module "oke" {
     pub_lb   = { create = "always", newbits = 11 }
     fss      = { create = "always", newbits = 11 }
     workers  = { create = "always", newbits = 4 }
+    pods     = { create = "always", newbits = 4 }
   }
   nsgs = {
     bastion  = { create = "always" }
@@ -150,6 +151,7 @@ module "oke" {
     pub_lb   = { create = "always" }
     fss      = { create = "always" }
     workers  = { create = "always" }
+    pods     = { create = "always" }
   }
   allow_rules_internal_lb = {
     "Allow TCP ingress to internal load balancers from internal VCN/DRG" = {

@@ -1,21 +1,21 @@
-# Running RDMA (remote direct memory access) GPU workloads on OKE
+# Running RDMA (remote direct memory access) GPU workloads on OKE using VCN-Native Pod Networking (NPN)
 Oracle Cloud Infrastructure Kubernetes Engine (OKE) is a fully-managed, scalable, and highly available service that you can use to deploy your containerized applications to the cloud.
 
 Please visit the [OKE documentation page](https://docs.oracle.com/en-us/iaas/Content/ContEng/Concepts/contengoverview.htm) for more information.
 
 ### Supported Operating Systems
-For the Nvidia A100 and H100 shapes (BM.GPU.H100.8, BM.GPU.A100-v2.8, BM.GPU4.8, BM.GPU.B4.8) and AMD MI300x shape (BM.GPU.MI300X.8), Ubuntu 22.04 is supported.
+For the Nvidia A100, H100, and H200 shapes (BM.GPU.H200.8, BM.GPU.H100.8, BM.GPU.A100-v2.8, BM.GPU4.8, BM.GPU.B4.8) and AMD MI300x shape (BM.GPU.MI300X.8), Ubuntu 22.04 is supported.
 
 ### Required policies
-The OCI Resource Manager stack template uses the [Self Managed Nodes](https://docs.oracle.com/en-us/iaas/Content/ContEng/Tasks/contengworkingwithselfmanagednodes.htm) functionality of OKE.
+These template uses the [Self Managed Nodes](https://docs.oracle.com/en-us/iaas/Content/ContEng/Tasks/contengworkingwithselfmanagednodes.htm) functionality of OKE.
 
-Below policies are required. The OCI Resource Manager stack will create them for you if you have the necessary permissions. If you don't have the permissions, please find more information about the policies below.
+Below policies are required. The template will create them for you if you have the necessary permissions. If you don't have the permissions, please find more information about the policies below.
 
 - [Policy Configuration for Cluster Creation and Deployment](https://docs.oracle.com/en-us/iaas/Content/ContEng/Concepts/contengpolicyconfig.htm)
 - [Creating a Dynamic Group and a Policy for Self-Managed Nodes](https://docs.oracle.com/en-us/iaas/Content/ContEng/Tasks/contengdynamicgrouppolicyforselfmanagednodes.htm)
 
 ## Instructions for deploying an OKE cluster with GPUs and RDMA connectivity
-You will need a CPU pool and a GPU pool. The OCI Resource Manager stack deploys an operational worker pool by default and you choose to deploy addidional CPU/GPU worker pools.
+You will need a CPU pool and a GPU pool.
 
 You can use the below images for both CPU and GPU pools.
 
@@ -38,29 +38,132 @@ You can use the instructions [here](https://docs.oracle.com/en-us/iaas/Content/C
 - [ROCm 6.2](https://objectstorage.us-ashburn-1.oraclecloud.com/p/tpswnRAUmrJ49uLAGk_ku6B13hyGzf_Gv1vrggtDWhOywSM5YGzoMPiO88gc3Cv-/n/imagegen/b/GPU-imaging/o/Ubuntu-22-OFED-5.9-0.5.6.0.127-ROCM-6.2-90-2024.08.12-0.oci)
 
 
-### Deploy the cluster using the Oracle Cloud Resource Manager template
+### Deploying a cluster with VCN-Native Pod Networking using the template
 You can easily deploy the cluster using the **Deploy to Oracle Cloud** button below.
 
-[![Deploy to Oracle Cloud](https://oci-resourcemanager-plugin.plugins.oci.oraclecloud.com/latest/deploy-to-oracle-cloud.svg)](https://cloud.oracle.com/resourcemanager/stacks/create?zipUrl=https://github.com/oracle-quickstart/oci-hpc-oke/releases/download/v24.10.0/oke-rdma-quickstart-v24.10.0.zip)
+1. #### Update the VCN and subnet CIDRs
+Change `vcn_cidrs` variable in `variables.tf` and the subnets in `oke-cluster.tf` if needed. The default VCN CIDR is `10.140.0.0/16`.
 
-For the image ID, use the ID of the image that you imported in the previous step.
+```
+  subnets = {
+    bastion  = { create = "always", newbits = 13 }
+    cp       = { create = "always", newbits = 13 }
+    operator = { create = "always", newbits = 13 }
+    int_lb   = { create = "always", newbits = 11 }
+    pub_lb   = { create = "always", newbits = 11 }
+    fss      = { create = "always", newbits = 11 }
+    workers  = { create = "always", newbits = 4 }
+    pods     = { create = "always", newbits = 4 }
+  }
+```
 
-The template will deploy a `bastion` instance and an `operator` instance. The `operator` instance will have access to the OKE cluster. You can connect to the `operator` instance via SSH with `ssh -J ubuntu@<bastion IP> ubuntu@<operator IP>`.
+2. #### Deploy an Operational (CPU) node first
+This is a temporary requirement to prevent rebooting the GPU nodes in the next step. This step will not be needed when the fix for VCN-Native Pod Networking (NPN) is rolled out.
 
-You can also find this information under the **Application information** tab in the OCI Resource Manager stack.
+You will need the following variables set. You will reboot this node, so start with 1 node. You can scale it up later.
 
-### Wait until you see all nodes in the cluster
+```
+# Operational pool
+worker_ops_ad              = <Availability domain>
+worker_ops_image_custom_id = <Image OCID for the Operational pool nodes>
+worker_ops_pool_size       = 1
+```
+
+Example:
+```
+# Operational pool
+worker_ops_ad              = "VXpT:US-ASHBURN-AD-1"
+worker_ops_image_custom_id = "ocid1.image.oc1.us-ashburn-1.aaaaaaaa62vmz4zugj3pirjmdrwiwfkhf4fqdifahotbvwaazvlt3d57bdaa"
+worker_ops_pool_size       = 1
+```
+
+3. #### Wait until you see the node in the cluster
+The values of `access_k8s_public_endpoint` & `access_k8s_private_endpoint` will show you the command to create the kubeconfig to access the cluster locally. You will need to [install](https://docs.oracle.com/en-us/iaas/Content/API/SDKDocs/cliinstall.htm) and [configure](https://docs.oracle.com/en-us/iaas/Content/API/SDKDocs/cliconfigure.htm) OCI CLI.
+
 
 ```sh
 kubectl get nodes
 
-NAME           STATUS     ROLES    AGE     VERSION
-10.0.103.73    Ready      <none>   2d23h   v1.25.6
-10.0.127.206   Ready      node     2d3h    v1.25.6
-10.0.127.32    Ready      node     2d3h    v1.25.6
-10.0.83.93     Ready      <none>   2d23h   v1.25.6
-10.0.96.82     Ready      node     2d23h   v1.25.6
+NAME            STATUS   ROLES   AGE     VERSION
+10.140.148.39   Ready    node    4m12s   v1.29.1
 ```
+
+4. #### Disable VCN-Native Pod Networking Add-on
+You can get the cluster ID from the `cluster_id` in the outputs.
+
+You can find the list of region identifiers [here](https://docs.oracle.com/en-us/iaas/Content/General/Concepts/regions.htm).
+
+```
+oci ce cluster disable-addon --cluster-id <cluster-id> --addon-name OciVcnIpNative --is-remove-existing-add-on false --region <region>
+```
+
+5. #### Update the container image for the VCN-Native Pod Networking daemonset
+
+```
+kubectl -n kube-system set image daemonset vcn-native-ip-cni "*=iad.ocir.io/ociokedev/sohpatil/oke-public-vcn-native-ip-cni-plugin:bm-nic-fix"
+```
+
+6. #### Enable Nvidia GPU device plugin add-on
+You can get the cluster ID from the `cluster_id` in the outputs.
+
+```
+oci ce cluster install-addon --cluster-id <cluster-id> --addon-name NvidiaGpuPlugin --region <region>
+```
+
+7. #### Reboot the node
+You can either use the web console or from the CLI.
+
+From CLI, you can get the instance ID of the node you deployed with:
+
+```
+kubectl get node <Node name> -o json | jq -r .spec.providerID
+```
+
+Example:
+```
+kubectl get node 10.140.148.39 -o json | jq -r .spec.providerID
+
+ocid1.instance.oc1.us-ashburn-1.anwwkljrpwneysacaq2ppzlpkq3kw6rgqff32tb3rfqkwwm5qqg7dn446b4q
+```
+
+Then use the below OCI CLI command to reboot the node:
+
+```
+oci compute instance action --instance-id <instance_OCID> --action SOFTRESET --region <region>
+```
+
+8. #### Deploy GPU nodes and scale up the Operational (CPU) nodes
+
+```
+# Operational pool
+worker_ops_ad              = <Availability domain for the Operational pool workers>
+worker_ops_image_custom_id = <Image OCID for the Operational pool nodes>
+worker_ops_pool_size       = 3
+
+# GPU & RDMA pool
+worker_rdma_enabled = true
+worker_rdma_ad        = <Availability domain for the GPU & RDMA pool workers>
+worker_rdma_shape     = <GPU & RDMA shape>
+worker_rdma_pool_size = 2
+worker_rdma_image_custom_id  = <Image OCID for the GPU & RDMA pool nodes>
+```
+
+Example:
+
+```
+# Operational pool
+worker_ops_ad              = "VXpT:AP-ASHBURN-1-AD-1"
+worker_ops_image_custom_id = "ocid1.image.oc1.ap-ashburn-1.aaaaaaaa62vmz4zugj3pirjmdrwiwfkhf4fqdifahotbvwaazvlt3d57bdaa"
+worker_ops_pool_size       = 1
+
+# GPU & RDMA pool
+worker_rdma_enabled   = true
+worker_rdma_ad        = "VXpT:AP-ASHBURN-1-AD-1"
+worker_rdma_shape     = "BM.GPU.H100.8"
+worker_rdma_pool_size = 2
+worker_rdma_image_custom_id  = "ocid1.image.oc1.ap-ashburn-1.aaaaaaaalggx4beshrcnd6jsktxihqra3o5z7qi56uehg6t7z7est3kcs32a"
+```
+
 
 ### Add a Service Account Authentication Token (optional but recommended)
 More info [here.](https://docs.oracle.com/en-us/iaas/Content/ContEng/Tasks/contengaddingserviceaccttoken.htm)
@@ -78,6 +181,9 @@ kubectl config set-credentials kubeconfig-sa --token=$TOKEN
 
 kubectl config set-context --current --user=kubeconfig-sa
 ```
+
+
+
 
 ### Using the host RDMA network interfaces in manifests
 In order to use the RDMA interfaces on the host in your pods, you should have the below sections in your manifests:
@@ -155,7 +261,12 @@ kubectl create rolebinding default-view --namespace default --serviceaccount def
 > [!IMPORTANT]  
 > The NCCL parameters are different between the H100 and A100 shapes. Please make sure that you are using the correct manifest for your bare metal GPU shapes.
 
-##### BM.GPU.H100
+##### BM.GPU.H200.8
+```
+kubectl apply -f https://raw.githubusercontent.com/OguzPastirmaci/oci-hpc-oke-npn/main/manifests/nccl-tests/BM.GPU.H200.8-nccl-test.yaml
+```
+
+##### BM.GPU.H100.8
 ```
 kubectl apply -f https://raw.githubusercontent.com/oracle-quickstart/oci-hpc-oke/main/manifests/nccl-tests/BM.GPU.H100.8-nccl-test.yaml
 ```
