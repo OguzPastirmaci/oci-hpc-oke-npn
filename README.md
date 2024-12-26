@@ -59,7 +59,7 @@ Change `vcn_cidrs` variable in `variables.tf` and the subnets in `oke-cluster.tf
 2. #### Deploy an Operational (CPU) node first
 This is a temporary requirement to prevent rebooting the GPU nodes in the next step. This step will not be needed when the fix for VCN-Native Pod Networking (NPN) is rolled out.
 
-You will need the following variables set. You will reboot this node, so start with 1 node. You can scale it up later.
+You will need the following variables set. You will reboot this node, so start with 1 node. You can scale it out later.
 
 ```
 # Operational pool
