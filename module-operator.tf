@@ -57,7 +57,6 @@ module "operator" {
   assign_dns                = var.assign_dns
   availability_domain       = coalesce(var.operator_availability_domain, lookup(local.ad_numbers_to_names, local.ad_numbers[0]))
   cloud_init                = var.operator_cloud_init
-  await_cloudinit           = var.operator_await_cloudinit
   image_id                  = local.operator_image_id
   install_cilium            = var.cilium_install
   install_helm              = var.operator_install_helm
@@ -65,7 +64,7 @@ module "operator" {
   install_k9s               = var.operator_install_k9s
   install_kubectx           = var.operator_install_kubectx
   install_kubectl_from_repo = var.operator_install_kubectl_from_repo
-  install_oci_cli           = var.operator_install_oci_cli
+  install_stern             = var.operator_install_stern
   kubeconfig                = yamlencode(local.kubeconfig_private)
   kubernetes_version        = var.kubernetes_version
   nsg_ids                   = compact(flatten([var.operator_nsg_ids, try(module.network.operator_nsg_id, null)]))

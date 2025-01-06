@@ -52,18 +52,18 @@ resource "oci_core_instance_configuration" "workers" {
 
       metadata = merge(
         {
-          apiserver_host            = var.apiserver_private_host
-          cluster_ca_cert           = var.cluster_ca_cert
-          oke-k8version             = var.kubernetes_version
-          oke-kubeproxy-proxy-mode  = var.kubeproxy_mode
-          oke-tenancy-id            = var.tenancy_id
-          oke-initial-node-labels   = join(",", [for k, v in each.value.node_labels : format("%v=%v", k, v)])
-          secondary_vnics           = jsonencode(lookup(each.value, "secondary_vnics", {}))
-          ssh_authorized_keys       = var.ssh_public_key
-          user_data                 = lookup(lookup(data.cloudinit_config.workers, each.key, {}), "rendered", "")
-          oke-native-pod-networking = "true"
-          oke-max-pods              = "110"
-          pod-subnets               = var.pod_subnet_id
+          apiserver_host           = var.apiserver_private_host
+          cluster_ca_cert          = var.cluster_ca_cert
+          oke-k8version            = var.kubernetes_version
+          oke-kubeproxy-proxy-mode = var.kubeproxy_mode
+          oke-tenancy-id           = var.tenancy_id
+          oke-initial-node-labels  = join(",", [for k, v in each.value.node_labels : format("%v=%v", k, v)])
+          secondary_vnics          = jsonencode(lookup(each.value, "secondary_vnics", {}))
+          ssh_authorized_keys      = var.ssh_public_key
+          user_data                = lookup(lookup(data.cloudinit_config.workers, each.key, {}), "rendered", "")
+          oke-native-pod-networking = var.cni_type == "npn" ? true : false
+          oke-max-pods              = var.max_pods_per_node
+          pod-subnets               = try(module.network.pod_subnet_id, "")
         },
 
         # Only provide cluster DNS service address if set explicitly; determined automatically in practice.
@@ -79,7 +79,8 @@ resource "oci_core_instance_configuration" "workers" {
       dynamic "shape_config" {
         for_each = length(regexall("Flex", each.value.shape)) > 0 ? [1] : []
         content {
-          ocpus = each.value.ocpus
+          baseline_ocpu_utilization = lookup(each.value, "burst", "BASELINE_1_1")
+          ocpus                     = each.value.ocpus
           memory_in_gbs = ( # If > 64GB memory/core, correct input to exactly 64GB memory/core
             (each.value.memory / each.value.ocpus) > 64 ? each.value.ocpus * 64 : each.value.memory
           )
@@ -119,18 +120,22 @@ resource "oci_core_instance_configuration" "workers" {
       is_pv_encryption_in_transit_enabled = each.value.pv_transit_encryption
     }
 
-    block_volumes {
-      attach_details {
-        type                                = each.value.block_volume_type
-        is_pv_encryption_in_transit_enabled = each.value.pv_transit_encryption
-      }
+    dynamic "block_volumes" {
+      for_each = (lookup(each.value, "disable_block_volume", false) != true) ? [1] : []
+      content {
+        attach_details {
+          type                                = each.value.block_volume_type
+          is_pv_encryption_in_transit_enabled = each.value.pv_transit_encryption
+        }
 
-      create_details {
-        // Limit to first candidate placement AD for cluster-network; undefined for all otherwise
-        availability_domain = each.value.mode == "cluster-network" ? element(each.value.availability_domains, 1) : null
-        compartment_id      = each.value.compartment_id
-        display_name        = each.key
-        kms_key_id          = each.value.volume_kms_key_id
+        create_details {
+          // Limit to first candidate placement AD for cluster-network; undefined for all otherwise
+          availability_domain = each.value.mode == "cluster-network" ? element(each.value.availability_domains, 1) : null
+          compartment_id      = each.value.compartment_id
+          display_name        = each.key
+          kms_key_id          = each.value.volume_kms_key_id
+          size_in_gbs         = max(50, lookup(each.value, "block_volume_size_in_gbs", 50))
+        }
       }
     }
 
@@ -164,7 +169,6 @@ resource "oci_core_instance_configuration" "workers" {
     create_before_destroy = true
     ignore_changes = [
       defined_tags, freeform_tags, display_name,
-      # instance_details[0].launch_details[0].metadata,
       instance_details[0].launch_details[0].defined_tags,
       instance_details[0].launch_details[0].freeform_tags,
       instance_details[0].launch_details[0].create_vnic_details[0].defined_tags,

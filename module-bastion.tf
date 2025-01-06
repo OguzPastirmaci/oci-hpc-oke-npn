@@ -49,7 +49,6 @@ module "bastion" {
   assign_dns               = var.assign_dns
   availability_domain      = coalesce(var.bastion_availability_domain, lookup(local.ad_numbers_to_names, local.ad_numbers[0]))
   bastion_image_os_version = var.bastion_image_os_version
-  await_cloudinit          = var.bastion_await_cloudinit
   image_id                 = local.bastion_image_id
   nsg_ids                  = try(compact(flatten([var.bastion_nsg_ids, [try(module.network.bastion_nsg_id, null)]])), [])
   is_public                = var.bastion_is_public

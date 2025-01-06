@@ -7,7 +7,6 @@ variable "state_id" { type = string }
 
 # Bastion
 variable "assign_dns" { type = bool }
-variable "await_cloudinit" { type = string }
 variable "availability_domain" { type = string }
 variable "bastion_image_os_version" {type = string}
 variable "image_id" { type = string }

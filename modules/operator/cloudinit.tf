@@ -29,13 +29,13 @@ data "cloudinit_config" "operator" {
       package_update  = true
       package_upgrade = var.upgrade
       packages = compact([
-        #"git",
-        #"jq",
-        #"python3-oci-cli",
-        "python3-pip",
-        #var.install_helm ? "helm" : null,
+        "git",
+        "jq",
+        "python3-oci-cli",
+        "golang",
+        var.install_helm ? "helm" : null,
         var.install_istioctl ? "istio-istioctl" : null,
-        #var.install_kubectl_from_repo ? "kubectl": null,
+        var.install_kubectl_from_repo ? "kubectl": null,
       ])
       yum_repos = {
         "${local.developer_EPEL}" = {
@@ -102,22 +102,10 @@ data "cloudinit_config" "operator" {
     merge_type = local.default_cloud_init_merge_type
   }
 
-  # OCI CLI installation
-  part {
-    #for_each = var.install_oci_cli ? [] : [1]
-      content_type = "text/cloud-config"
-      content = jsonencode({
-        runcmd = [
-          "pip3 install oci-cli",
-        ]
-      })
-      filename   = "20-ocicli.yml"
-      merge_type = local.default_cloud_init_merge_type
-  }
-
   # kubectl installation
-  part {
-    #for_each = var.install_kubectl_from_repo ? [] : [1]
+  dynamic "part" {
+    for_each = var.install_kubectl_from_repo ? [] : [1]
+    content {
       content_type = "text/cloud-config"
       content = jsonencode({
         runcmd = [
@@ -129,6 +117,7 @@ data "cloudinit_config" "operator" {
       })
       filename   = "20-kubectl.yml"
       merge_type = local.default_cloud_init_merge_type
+    }
   }
 
   # kubectx/kubens installation
@@ -144,21 +133,6 @@ data "cloudinit_config" "operator" {
         ]
       })
       filename   = "20-kubectx.yml"
-      merge_type = local.default_cloud_init_merge_type
-    }
-  }
-
-  # Helm installation
-  dynamic "part" {
-    for_each = var.install_helm ? [1] : []
-    content {
-      content_type = "text/cloud-config"
-      content = jsonencode({
-        runcmd = [
-          "curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash",
-        ]
-      })
-      filename   = "20-helm.yml"
       merge_type = local.default_cloud_init_merge_type
     }
   }
@@ -192,7 +166,7 @@ data "cloudinit_config" "operator" {
       content_type = "text/cloud-config"
       content = jsonencode({
         runcmd = [
-          "curl -LO https://github.com/derailed/k9s/releases/download/v0.32.5/k9s_Linux_amd64.tar.gz",
+          "curl -LO https://github.com/derailed/k9s/releases/download/v0.27.2/k9s_Linux_amd64.tar.gz",
           "tar -xvzf k9s_Linux_amd64.tar.gz && mv ./k9s /usr/bin/k9s",
         ]
       })
@@ -216,6 +190,23 @@ data "cloudinit_config" "operator" {
         ]
       })
       filename   = "20-cilium.yml"
+      merge_type = local.default_cloud_init_merge_type
+    }
+  }
+
+  # stern installation
+  dynamic "part" {
+    for_each = var.install_kubectx ? [1] : []
+    content {
+      content_type = "text/cloud-config"
+      content = jsonencode({
+        runcmd = [
+          "go install github.com/stern/stern@v1.30",
+          "mv $HOME/go/bin/stern /usr/local/bin/",
+          "ln -s /usr/local/bin/stern /usr/bin/stern"
+        ]
+      })
+      filename   = "20-stern.yml"
       merge_type = local.default_cloud_init_merge_type
     }
   }
@@ -287,7 +278,7 @@ data "cloudinit_config" "operator" {
     content {
       # Load content from file if local path, attempt base64 decode, or use raw value
       content = contains(keys(part.value), "content") ? (
-        fileexists(lookup(part.value, "content")) ? file(lookup(part.value, "content"))
+        try(fileexists(lookup(part.value, "content")), false) ? file(lookup(part.value, "content"))
         : try(base64decode(lookup(part.value, "content")), lookup(part.value, "content"))
       ) : ""
       content_type = lookup(part.value, "content_type", local.default_cloud_init_content_type)
@@ -320,7 +311,6 @@ data "cloudinit_config" "operator" {
 }
 
 resource "null_resource" "await_cloudinit" {
-  count = var.await_cloudinit ? 1 : 0
   connection {
     bastion_host        = var.bastion_host
     bastion_user        = var.bastion_user

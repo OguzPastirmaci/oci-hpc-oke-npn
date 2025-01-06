@@ -11,7 +11,6 @@ variable "bastion_user" { type = string }
 
 # Operator
 variable "assign_dns" { type = bool }
-variable "await_cloudinit" { type = bool }
 variable "availability_domain" { type = string }
 variable "cloud_init" { type = list(map(string)) }
 variable "image_id" { type = string }
@@ -19,9 +18,12 @@ variable "install_cilium" { type = bool }
 variable "install_helm" { type = bool }
 variable "install_istioctl" { type = bool }
 variable "install_k9s" { type = bool }
-variable "install_oci_cli" {type = bool}
-variable "install_kubectl_from_repo" {type = bool}
+variable "install_kubectl_from_repo" { 
+  type    = bool
+  default = true
+}
 variable "install_kubectx" { type = bool }
+variable "install_stern" { type = bool }
 variable "kubeconfig" { type = string }
 variable "kubernetes_version" { type = string }
 variable "nsg_ids" { type = list(string) }

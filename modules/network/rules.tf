@@ -20,12 +20,25 @@ locals {
     { for k, v in local.fss_rules : k => merge(v, { "nsg_id" = local.fss_nsg_id }) },
     ) : x => merge(y, {
       description               = x
+      stateless                 = lookup(y, "stateless", false)
       network_security_group_id = lookup(y, "nsg_id")
       direction                 = contains(keys(y), "source") ? "INGRESS" : "EGRESS"
       protocol                  = lookup(y, "protocol")
-      source                    = lookup(y, "source", null)
+      source                    = (
+        alltrue([
+          upper(lookup(y, "source_type", "")) == local.rule_type_nsg,
+          length(regexall("ocid\\d+\\.networksecuritygroup", lower(lookup(y, "source", "")))) == 0]) ?
+          lookup(local.all_nsg_ids, lower(lookup(y, "source", "")), null) :
+          lookup(y, "source", null)
+      )
       source_type               = lookup(y, "source_type", null)
-      destination               = lookup(y, "destination", null)
+      destination               = (
+        alltrue([
+          upper(lookup(y, "destination_type", "")) == local.rule_type_nsg,
+          length(regexall("ocid\\d+\\.networksecuritygroup", lower(lookup(y, "destination", "")))) == 0]) ?
+          lookup(local.all_nsg_ids, lower(lookup(y, "destination", "")), null) :
+          lookup(y, "destination", null)
+      )
       destination_type          = lookup(y, "destination_type", null)
   }) }
 
@@ -44,7 +57,7 @@ locals {
 
 resource "oci_core_network_security_group_security_rule" "oke" {
   for_each                  = local.all_rules
-  stateless                 = false
+  stateless                 = each.value.stateless
   description               = each.value.description
   destination               = each.value.destination
   destination_type          = each.value.destination_type
