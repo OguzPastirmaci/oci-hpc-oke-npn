@@ -50,11 +50,6 @@ resource "oci_core_instance_pool" "tfscaled_workers" {
       EOT
     }
 
-  #  precondition {
-  #    condition     = var.cni_type == "flannel"
-  #    error_message = "Instance Pools require a cluster with `cni_type = flannel`."
-  #  }
-
     precondition {
       condition     = each.value.autoscale == false
       error_message = "Instance Pools do not support cluster autoscaler management."
