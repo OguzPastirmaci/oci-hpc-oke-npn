@@ -54,6 +54,7 @@ module "operator" {
   bastion_user = var.bastion_user
 
   # Operator
+  await_cloudinit           = var.operator_await_cloudinit
   assign_dns                = var.assign_dns
   availability_domain       = coalesce(var.operator_availability_domain, lookup(local.ad_numbers_to_names, local.ad_numbers[0]))
   cloud_init                = var.operator_cloud_init
