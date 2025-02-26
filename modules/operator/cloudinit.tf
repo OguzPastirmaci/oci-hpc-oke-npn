@@ -111,6 +111,7 @@ data "cloudinit_config" "operator" {
       content = jsonencode({
         runcmd = [
           "curl -LO https://raw.githubusercontent.com/oracle/oci-cli/master/scripts/install/install.sh",
+          "chmod 700 install.sh",
           "./install.sh --accept-all-defaults",
         ]
       })
