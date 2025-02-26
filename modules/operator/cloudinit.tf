@@ -105,7 +105,7 @@ data "cloudinit_config" "operator" {
 
   # OCI CLI installation from repo
   dynamic "part" {
-    for_each = var.install_oci_cli_from_repo ? [] : [1]
+    for_each = var.install_oci_cli_from_repo ? [1] : []
     content {
       content_type = "text/cloud-config"
       content = jsonencode({
@@ -121,7 +121,7 @@ data "cloudinit_config" "operator" {
 
   # kubectl installation
   dynamic "part" {
-    for_each = var.install_kubectl_from_repo ? [] : [1]
+    for_each = var.install_kubectl_from_repo ? [1] : []
     content {
       content_type = "text/cloud-config"
       content = jsonencode({
