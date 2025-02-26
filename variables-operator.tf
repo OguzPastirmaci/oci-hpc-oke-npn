@@ -66,7 +66,7 @@ variable "operator_install_helm" {
 }
 
 variable "operator_install_helm_from_repo" {
-  default     = true
+  default     = false
   description = "Whether to install Helm on the created operator host."
   type        = bool
 }

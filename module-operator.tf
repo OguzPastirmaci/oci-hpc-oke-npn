@@ -61,8 +61,8 @@ module "operator" {
   image_id                  = local.operator_image_id
   install_cilium            = var.cilium_install
   install_helm              = var.operator_install_helm
-  install_helm_from_repo    = var.install_helm_from_repo
-  install_oci_cli_from_repo = var.oci_cli_from_repo
+  install_helm_from_repo    = var.operator_install_helm_from_repo
+  install_oci_cli_from_repo = var.operator_install_oci_cli_from_repo
   install_istioctl          = var.operator_install_istioctl
   install_k9s               = var.operator_install_k9s
   install_kubectx           = var.operator_install_kubectx
