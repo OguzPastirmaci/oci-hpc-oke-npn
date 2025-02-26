@@ -31,7 +31,6 @@ data "cloudinit_config" "operator" {
       packages = compact([
         "git",
         "jq",
-        "python3-oci-cli",
         "golang",
         var.install_helm ? "helm" : null,
         var.install_istioctl ? "istio-istioctl" : null,
