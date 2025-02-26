@@ -10,6 +10,7 @@ variable "bastion_host" { type = string }
 variable "bastion_user" { type = string }
 
 # Operator
+variable "await_cloudinit" { type = string }
 variable "assign_dns" { type = bool }
 variable "availability_domain" { type = string }
 variable "cloud_init" { type = list(map(string)) }

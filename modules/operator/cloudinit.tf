@@ -345,6 +345,7 @@ data "cloudinit_config" "operator" {
 }
 
 resource "null_resource" "await_cloudinit" {
+  count = var.await_cloudinit ? 1 : 0
   connection {
     bastion_host        = var.bastion_host
     bastion_user        = var.bastion_user

@@ -141,3 +141,9 @@ variable "operator_private_ip" {
   description = "The IP address of an existing operator host. Ignored when create_operator = true."
   type        = string
 }
+
+variable "operator_await_cloudinit" {
+  default     = true
+  description = "Whether to block until successful connection to operator and completion of cloud-init."
+  type        = bool
+}
