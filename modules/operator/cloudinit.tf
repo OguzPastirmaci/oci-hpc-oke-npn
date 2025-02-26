@@ -110,7 +110,7 @@ data "cloudinit_config" "operator" {
       content_type = "text/cloud-config"
       content = jsonencode({
         runcmd = [
-          "curl -LO https://raw.githubusercontent.com/oracle/oci-cli/master/scripts/install/install.sh"
+          "curl -LO https://raw.githubusercontent.com/oracle/oci-cli/master/scripts/install/install.sh",
           "./install.sh --accept-all-defaults",
         ]
       })
