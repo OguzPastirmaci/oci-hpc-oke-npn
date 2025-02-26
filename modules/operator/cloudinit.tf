@@ -129,7 +129,7 @@ data "cloudinit_config" "operator" {
           "CLI_ARCH='${local.arch_amd}'",
           "if [ \"$(uname -m)\" = ${local.arch_arm} ]; then CLI_ARCH='arm64'; fi",
           "curl -LO https://dl.k8s.io/release/${var.kubernetes_version}/bin/linux/$CLI_ARCH/kubectl",
-          "install -o root -g root -m 0755 kubectl /usr/bin/kubectl"
+          "install -o root -g root -m 0755 kubectl /usr/bin/kubectl",
         ]
       })
       filename   = "20-kubectl.yml"
@@ -230,7 +230,7 @@ data "cloudinit_config" "operator" {
 
   # stern installation
   dynamic "part" {
-    for_each = var.install_kubectx ? [1] : []
+    for_each = var.install_stern ? [1] : []
     content {
       content_type = "text/cloud-config"
       content = jsonencode({
